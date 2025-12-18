@@ -6,6 +6,8 @@ import Hero from './components/Hero'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import Features from './pages/Features'
+import About from './pages/About'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -50,6 +52,8 @@ function App() {
           <Route path="/" element={isLoggedIn ? <Home isLoggedIn={isLoggedIn} /> : <><Hero /><Home isLoggedIn={isLoggedIn} /></>} />
           <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/signup" element={isLoggedIn ? <Navigate to="/" /> : <Signup />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/about" element={<About />} />
         </Routes>
       </div>
     </Router>

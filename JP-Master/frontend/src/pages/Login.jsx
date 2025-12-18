@@ -32,17 +32,17 @@ export default function Login({ onLoginSuccess = () => { } }) {
             const data = await response.json()
 
             if (!response.ok) {
-                setError(data.error || 'Đăng nhập thất bại')
+                setError(data.error || 'Login failed')
                 return
             }
 
             // Notify parent to update auth state + localStorage
             onLoginSuccess(data.user, data.token, rememberMe)
 
-            setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
+            setSuccess('Login successful! Redirecting...')
             navigate('/')
         } catch (err) {
-            setError(err.message || 'Lỗi kết nối với server')
+            setError(err.message || 'Unable to reach server')
         } finally {
             setLoading(false)
         }
@@ -105,7 +105,7 @@ export default function Login({ onLoginSuccess = () => { } }) {
                             </a>
                         </div>
                         <Button size="lg" className="w-full" disabled={loading}>
-                            {loading ? 'Đang đăng nhập...' : 'Sign In'}
+                            {loading ? 'Signing in...' : 'Sign In'}
                         </Button>
                     </form>
 

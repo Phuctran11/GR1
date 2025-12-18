@@ -40,13 +40,13 @@ export default function Navbar({ isLoggedIn = false, user = null, onLogout = () 
                         Home
                     </Link>
                     <Link
-                        to="/#features"
+                        to="/features"
                         className="text-gray-700 hover:text-green-600 font-medium transition-colors"
                     >
                         Features
                     </Link>
                     <Link
-                        to="/#about"
+                        to="/about"
                         className="text-gray-700 hover:text-green-600 font-medium transition-colors"
                     >
                         About

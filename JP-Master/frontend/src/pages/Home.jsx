@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import LevelCard from '../components/LevelCard'
+import InfoSection from '../components/InfoSection'
 import { FaFont, FaComments, FaChartLine, FaRocket, FaBriefcase, FaBook, FaPen, FaHeadphones, FaCheck } from 'react-icons/fa6'
 
 /**
@@ -114,24 +115,7 @@ export default function Home({ isLoggedIn = false }) {
                 </div>
 
                 {/* Info Section */}
-                <div className="mt-20 bg-white rounded-2xl p-8 shadow-lg border-l-4 border-green-600">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">How It Works</h2>
-                    <div className="grid-4-cols">
-                        {[
-                            { step: 1, title: 'Choose Words', Icon: FaPen },
-                            { step: 2, title: 'Read Stories', Icon: FaBook },
-                            { step: 3, title: 'Listen & Learn', Icon: FaHeadphones },
-                            { step: 4, title: 'Take Quiz', Icon: FaCheck },
-                        ].map((item) => (
-                            <div key={item.step} className="text-center">
-                                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                                    <item.Icon className="text-2xl text-green-600" />
-                                </div>
-                                <p className="font-semibold text-gray-900">{item.title}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <InfoSection title="How It Works" />
             </div>
         </div>
     )

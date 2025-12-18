@@ -34,22 +34,22 @@ export default function Signup() {
 
         // Validate
         if (!formData.fullName || !formData.email || !formData.username || !formData.password) {
-            setError('Vui lòng điền tất cả các trường')
+            setError('Please fill in all required fields')
             return
         }
 
         if (formData.password !== formData.confirmPassword) {
-            setError('Mật khẩu không khớp')
+            setError('Passwords do not match')
             return
         }
 
         if (formData.password.length < 6) {
-            setError('Mật khẩu phải có ít nhất 6 ký tự')
+            setError('Password must be at least 6 characters')
             return
         }
 
         if (!formData.termsAgreed) {
-            setError('Bạn phải đồng ý với Điều khoản dịch vụ')
+            setError('You must agree to the Terms of Service')
             return
         }
 
@@ -73,17 +73,17 @@ export default function Signup() {
             const data = await response.json()
 
             if (!response.ok) {
-                setError(data.error || 'Đăng ký thất bại')
+                setError(data.error || 'Signup failed')
                 return
             }
 
             // Do NOT auto login; redirect to login page
-            setSuccess('Đăng ký thành công! Vui lòng đăng nhập để tiếp tục')
+            setSuccess('Signup successful! Please sign in to continue.')
             setTimeout(() => {
                 navigate('/login')
             }, 1200)
         } catch (err) {
-            setError(err.message || 'Lỗi kết nối với server')
+            setError(err.message || 'Unable to reach server')
         } finally {
             setLoading(false)
         }
@@ -186,7 +186,7 @@ export default function Signup() {
                             </span>
                         </label>
                         <Button size="lg" className="w-full" disabled={loading}>
-                            {loading ? 'Đang tạo tài khoản...' : 'Create Account'}
+                            {loading ? 'Creating account...' : 'Create Account'}
                         </Button>
                     </form>
 
