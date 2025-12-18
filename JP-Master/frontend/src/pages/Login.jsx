@@ -1,23 +1,82 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 
 /**
  * Login Page
  */
-export default function Login() {
+export default function Login({ onLoginSuccess = () => { } }) {
+    const navigate = useNavigate()
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [rememberMe, setRememberMe] = useState(false)
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [success, setSuccess] = useState('')
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        setError('')
+        setSuccess('')
+        setLoading(true)
+
+        try {
+            const response = await fetch('http://localhost:4000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                setError(data.error || 'Đăng nhập thất bại')
+                return
+            }
+
+            // Notify parent to update auth state + localStorage
+            onLoginSuccess(data.user, data.token, rememberMe)
+
+            setSuccess('Đăng nhập thành công! Đang chuyển hướng...')
+            navigate('/')
+        } catch (err) {
+            setError(err.message || 'Lỗi kết nối với server')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <div className="full-page page-gradient flex items-center justify-center section-padding">
             <div className="w-full max-w-md">
                 <div className="form-card">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome</h2>
                     <p className="text-gray-600 mb-6">Sign in to continue your learning journey</p>
 
-                    <form className="space-y-4">
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                            {error}
+                        </div>
+                    )}
+
+                    {success && (
+                        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
+                            {success}
+                        </div>
+                    )}
+
+                    <form className="space-y-4" onSubmit={handleSubmit}>
                         <div>
                             <label className="form-label">Email</label>
                             <input
                                 type="email"
                                 placeholder="you@example.com"
                                 className="form-input"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
                             />
                         </div>
                         <div>
@@ -26,19 +85,27 @@ export default function Login() {
                                 type="password"
                                 placeholder="••••••••"
                                 className="form-input"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
                             />
                         </div>
                         <div className="flex items-center justify-between">
                             <label className="flex items-center">
-                                <input type="checkbox" className="w-4 h-4 accent-green-600" />
+                                <input
+                                    type="checkbox"
+                                    className="w-4 h-4 accent-green-600"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                />
                                 <span className="ml-2 text-sm text-gray-600">Remember me</span>
                             </label>
                             <a href="#" className="text-sm text-green-600 hover:text-green-700 font-semibold">
                                 Forgot?
                             </a>
                         </div>
-                        <Button size="lg" className="w-full">
-                            Sign In
+                        <Button size="lg" className="w-full" disabled={loading}>
+                            {loading ? 'Đang đăng nhập...' : 'Sign In'}
                         </Button>
                     </form>
 

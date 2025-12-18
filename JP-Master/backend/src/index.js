@@ -1,10 +1,13 @@
 import dotenv from 'dotenv'
 dotenv.config()
 import express from 'express'
+import cors from 'cors'
 import { Pool } from 'pg'
+import { setupAuthRoutes } from './routes/authRoutes.js'
 
 const app = express()
 app.use(express.json())
+app.use(cors())
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -26,6 +29,10 @@ const server = app.listen(port, () => {
     if (hasDb) {
         console.log('DATABASE_URL (masked):', maskDatabaseUrl(process.env.DATABASE_URL))
     }
+
+    // Setup auth routes
+    setupAuthRoutes(app, pool)
+    console.log('Auth routes initialized')
 
     // quick DB check on startup
     ;(async () => {

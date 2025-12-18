@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import LevelCard from '../components/LevelCard'
 import { FaFont, FaComments, FaChartLine, FaRocket, FaBriefcase, FaBook, FaPen, FaHeadphones, FaCheck } from 'react-icons/fa6'
@@ -6,8 +7,9 @@ import { FaFont, FaComments, FaChartLine, FaRocket, FaBriefcase, FaBook, FaPen, 
 /**
  * Home Page - Displays lesson levels for user to choose
  */
-export default function Home() {
+export default function Home({ isLoggedIn = false }) {
     const [selectedLevel, setSelectedLevel] = useState(null)
+    const navigate = useNavigate()
 
     // Sample level data
     const levels = [
@@ -68,8 +70,11 @@ export default function Home() {
     ]
 
     const handleLevelClick = (levelId) => {
+        if (!isLoggedIn) {
+            navigate('/login')
+            return
+        }
         setSelectedLevel(levelId)
-        // Navigate or open modal in real app
         console.log(`Selected level: ${levelId}`)
     }
 
@@ -107,18 +112,6 @@ export default function Home() {
                         </div>
                     ))}
                 </div>
-
-                {/* Call to Action */}
-                {selectedLevel && (
-                    <div className="text-center space-y-4">
-                        <p className="text-lg text-gray-700">
-                            Ready to start learning?
-                        </p>
-                        <Button size="lg" className="mx-auto">
-                            Start Level {levels.find((l) => l.id === selectedLevel)?.level || 1}
-                        </Button>
-                    </div>
-                )}
 
                 {/* Info Section */}
                 <div className="mt-20 bg-white rounded-2xl p-8 shadow-lg border-l-4 border-green-600">
