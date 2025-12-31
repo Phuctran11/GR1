@@ -1,20 +1,25 @@
-import { useState } from 'react'
-import Button from '../components/Button'
-import LevelCard from '../components/LevelCard'
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Button from '../components/Button';
+import LevelCard from '../components/LevelCard';
+import InfoSection from '../components/InfoSection';
+import { fetchLevelProgress } from '../utils/levelProgress';
 import { FaFont, FaComments, FaChartLine, FaRocket, FaBriefcase, FaBook, FaPen, FaHeadphones, FaCheck } from 'react-icons/fa6'
 
 /**
  * Home Page - Displays lesson levels for user to choose
  */
-export default function Home() {
-    const [selectedLevel, setSelectedLevel] = useState(null)
+export default function Home({ isLoggedIn = false, user }) {
+    const [selectedLevel, setSelectedLevel] = useState(null);
+    const [levelProgress, setLevelProgress] = useState({}); // {N5: {total, remembered}, ...}
+    const navigate = useNavigate()
 
     // Sample level data
     const levels = [
         {
             id: 1,
             level: 1,
-            title: 'Hiragana & Katakana',
+            title: 'JLPT N5 Basics',
             description: 'Master the two Japanese writing systems through contextual stories.',
             color: 'green',
             Icon: FaFont,
@@ -50,7 +55,7 @@ export default function Home() {
         {
             id: 5,
             level: 5,
-            title: 'Business Japanese',
+            title: 'JLPT N1 Advanced',
             description: 'Learn professional and formal Japanese for workplace contexts.',
             color: 'pink',
             Icon: FaBriefcase,
@@ -67,10 +72,52 @@ export default function Home() {
         },
     ]
 
+    useEffect(() => {
+        // ...existing code...
+        if (!user?.user_id) return;
+        const levels = ['N5', 'N4', 'N3', 'N2', 'N1', 'SP'];
+        Promise.all(
+            levels.map(lvl => fetchLevelProgress(user.user_id, lvl).catch(() => ({ total: 0, remembered: 0, progress: {} })))
+        ).then(results => {
+            // Debug log kết quả trả về từ backend
+            // ...existing code...
+            const progressMap = {};
+            results.forEach((obj, idx) => {
+                const total = Number(obj.total) || 0;
+                const remembered = Number(obj.remembered) || 0;
+                const progress = obj.progress || {};
+                progressMap[levels[idx]] = { total, remembered, progress };
+            });
+            setLevelProgress(progressMap);
+        });
+    }, [user]);
+
     const handleLevelClick = (levelId) => {
+        if (!isLoggedIn) {
+            navigate('/login')
+            return
+        }
         setSelectedLevel(levelId)
-        // Navigate or open modal in real app
-        console.log(`Selected level: ${levelId}`)
+        // Không chuyển trang ở đây, chỉ highlight
+    }
+
+    // Map id sang level code cho flashcard
+    const levelIdToCode = {
+        1: 'N5',
+        2: 'N4',
+        3: 'N3',
+        4: 'N2',
+        5: 'N1',
+        6: 'SP',
+    }
+
+    const handleFlashcardClick = (levelId) => {
+        if (!isLoggedIn) {
+            navigate('/login')
+            return
+        }
+        const code = levelIdToCode[levelId] || 'N5';
+        navigate(`/flashcard/${code}`);
     }
 
     return (
@@ -91,9 +138,7 @@ export default function Home() {
                     {levels.map((level) => (
                         <div
                             key={level.id}
-                            onClick={() => handleLevelClick(level.id)}
-                            className={`transform transition-all duration-300 ${selectedLevel === level.id ? 'ring-4 ring-green-400' : ''
-                                }`}
+                            className={`transform transition-all duration-300 ${selectedLevel === level.id ? 'ring-4 ring-green-400' : ''}`}
                         >
                             <LevelCard
                                 level={level.level}
@@ -101,44 +146,25 @@ export default function Home() {
                                 description={level.description}
                                 color={level.color}
                                 Icon={level.Icon}
-                                progress={level.progress}
-                                onClick={() => handleLevelClick(level.id)}
+                                progressData={levelIdToCode[level.id] ? {
+                                    total: levelProgress[levelIdToCode[level.id]]?.total || 0,
+                                    progress: levelProgress[levelIdToCode[level.id]]?.progress || {}
+                                } : undefined}
+                                onClick={() => {
+                                    if (!isLoggedIn) {
+                                        navigate('/login');
+                                        return;
+                                    }
+                                    const code = levelIdToCode[level.id] || 'N5';
+                                    navigate(`/flashcard/${code}`);
+                                }}
                             />
                         </div>
                     ))}
                 </div>
 
-                {/* Call to Action */}
-                {selectedLevel && (
-                    <div className="text-center space-y-4">
-                        <p className="text-lg text-gray-700">
-                            Ready to start learning?
-                        </p>
-                        <Button size="lg" className="mx-auto">
-                            Start Level {levels.find((l) => l.id === selectedLevel)?.level || 1}
-                        </Button>
-                    </div>
-                )}
-
                 {/* Info Section */}
-                <div className="mt-20 bg-white rounded-2xl p-8 shadow-lg border-l-4 border-green-600">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">How It Works</h2>
-                    <div className="grid-4-cols">
-                        {[
-                            { step: 1, title: 'Choose Words', Icon: FaPen },
-                            { step: 2, title: 'Read Stories', Icon: FaBook },
-                            { step: 3, title: 'Listen & Learn', Icon: FaHeadphones },
-                            { step: 4, title: 'Take Quiz', Icon: FaCheck },
-                        ].map((item) => (
-                            <div key={item.step} className="text-center">
-                                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                                    <item.Icon className="text-2xl text-green-600" />
-                                </div>
-                                <p className="font-semibold text-gray-900">{item.title}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <InfoSection title="How It Works" />
             </div>
         </div>
     )
