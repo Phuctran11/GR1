@@ -107,3 +107,19 @@
 .section-mb {
   @apply mb-16;
 }
+
+/* Flashcard 3D Flip & Slide Animation */
+.perspective { perspective: 1200px; }
+.backface-hidden { backface-visibility: hidden; }
+.rotate-y-180 { transform: rotateY(180deg); }
+.transform-style-preserve-3d { transform-style: preserve-3d; }
+.slide-left { animation: slideLeft 0.35s; }
+.slide-right { animation: slideRight 0.35s; }
+@keyframes slideLeft {
+  0% { left: 0; opacity: 1; }
+  100% { left: -60px; opacity: 0; }
+}
+@keyframes slideRight {
+  0% { left: 0; opacity: 1; }
+  100% { left: 60px; opacity: 0; }
+}
