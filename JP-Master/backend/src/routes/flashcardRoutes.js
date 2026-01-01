@@ -1,4 +1,5 @@
-    import express from 'express';
+import express from 'express'
+import { authRequired } from '../middleware/auth.js'
 
 /**
  * Flashcard routes for vocabulary learning
@@ -7,9 +8,10 @@
  */
 export function setupFlashcardRoutes(app, pool) {
     // API: Lấy tổng số từ và số từ đã nhớ cho từng level (tối ưu 1 query)
-    app.get('/api/flashcard/level-progress', async (req, res) => {
-        const { user_id, level } = req.query;
-        if (!user_id || !level) return res.status(400).json({ error: 'Missing params' });
+    app.get('/api/flashcard/level-progress', authRequired, async (req, res) => {
+        const { level } = req.query;
+        const userId = req.user?.user_id
+        if (!userId || !level) return res.status(400).json({ error: 'Missing params' });
         try {
             // Lấy tổng số từ, số đã nhớ và danh sách vocab_id đã nhớ
             const result = await pool.query(
@@ -17,7 +19,7 @@ export function setupFlashcardRoutes(app, pool) {
                     FROM Vocabulary v
                     LEFT JOIN UserFlashcards uf ON v.vocab_id = uf.vocab_id AND uf.user_id = $1
                     WHERE v.jlpt_level = $2`,
-                [user_id, level]
+                [userId, level]
             );
             const total = result.rows.length;
             const progress = {};
@@ -49,16 +51,17 @@ export function setupFlashcardRoutes(app, pool) {
     });
 
     // Lưu trạng thái học flashcard của user
-    app.post('/api/flashcard/progress', async (req, res) => {
-        const { user_id, vocab_id, status } = req.body;
-        if (!user_id || !vocab_id || !status) return res.status(400).json({ error: 'Missing params' });
+    app.post('/api/flashcard/progress', authRequired, async (req, res) => {
+        const { vocab_id, status } = req.body;
+        const userId = req.user?.user_id
+        if (!userId || !vocab_id || !status) return res.status(400).json({ error: 'Missing params' });
         try {
             await pool.query(
                 `INSERT INTO UserFlashcards (user_id, vocab_id, status, updated_at)
                 VALUES ($1, $2, $3, NOW())
                 ON CONFLICT (user_id, vocab_id)
                 DO UPDATE SET status = $3, updated_at = NOW()`,
-                [user_id, vocab_id, status]
+                [userId, vocab_id, status]
             );
             res.json({ success: true });
         } catch (err) {
@@ -67,16 +70,17 @@ export function setupFlashcardRoutes(app, pool) {
     });
 
     // Lấy trạng thái học của user cho 1 level
-    app.get('/api/flashcard/user-progress', async (req, res) => {
-        const { user_id, level } = req.query;
-        if (!user_id || !level) return res.status(400).json({ error: 'Missing params' });
+    app.get('/api/flashcard/user-progress', authRequired, async (req, res) => {
+        const { level } = req.query;
+        const userId = req.user?.user_id
+        if (!userId || !level) return res.status(400).json({ error: 'Missing params' });
         try {
             const result = await pool.query(
                 `SELECT uf.vocab_id, uf.status
                 FROM UserFlashcards uf
                 JOIN Vocabulary v ON uf.vocab_id = v.vocab_id
                 WHERE uf.user_id = $1 AND v.jlpt_level = $2`,
-                [user_id, level]
+                [userId, level]
             );
             res.json(result.rows);
         } catch (err) {

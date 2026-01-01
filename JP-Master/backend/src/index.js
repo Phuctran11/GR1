@@ -5,6 +5,7 @@ import cors from 'cors'
 import { Pool } from 'pg'
 import { setupAuthRoutes } from './routes/authRoutes.js'
 import { setupFlashcardRoutes } from './routes/flashcardRoutes.js'
+import { setupReadingRoutes } from './routes/readingRoutes.js'
 
 const app = express()
 app.use(express.json())
@@ -39,6 +40,10 @@ const server = app.listen(port, () => {
     // Setup flashcard routes
     setupFlashcardRoutes(app, pool)
     console.log('Flashcard routes initialized')
+
+    // Setup AI reading routes
+    setupReadingRoutes(app, pool)
+    console.log('Reading routes initialized')
 
     // quick DB check on startup
     ;(async () => {

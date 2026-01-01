@@ -77,7 +77,7 @@ export default function Home({ isLoggedIn = false, user }) {
         if (!user?.user_id) return;
         const levels = ['N5', 'N4', 'N3', 'N2', 'N1', 'SP'];
         Promise.all(
-            levels.map(lvl => fetchLevelProgress(user.user_id, lvl).catch(() => ({ total: 0, remembered: 0, progress: {} })))
+            levels.map(lvl => fetchLevelProgress(lvl).catch(() => ({ total: 0, remembered: 0, progress: {} })))
         ).then(results => {
             // Debug log kết quả trả về từ backend
             // ...existing code...
