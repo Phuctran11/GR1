@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiFetch } from '../apiClient'
 
 /**
  * RememberButton - Nút đánh dấu đã nhớ từ vựng, gọi API lưu trạng thái
@@ -16,10 +17,9 @@ export default function RememberButton({ userId, vocabId, remembered, onChange }
         setLoading(true);
         setError('');
         try {
-            const res = await fetch('http://localhost:4000/api/flashcard/progress', {
+            const res = await apiFetch('/api/flashcard/progress', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId, vocab_id: vocabId, status: remembered ? 'not_remembered' : 'remembered' })
+                body: JSON.stringify({ vocab_id: vocabId, status: remembered ? 'not_remembered' : 'remembered' })
             });
             if (!res.ok) throw new Error('Lỗi cập nhật trạng thái');
             onChange && onChange(!remembered ? 'remembered' : 'not_remembered');

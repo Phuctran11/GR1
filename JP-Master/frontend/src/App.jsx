@@ -9,6 +9,7 @@ import Signup from './pages/Signup'
 import Features from './pages/Features'
 import About from './pages/About'
 import FlashcardPage from './pages/FlashcardPage'
+import ReadingGenerate from './pages/ReadingGenerate'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -56,6 +57,7 @@ function App() {
           <Route path="/features" element={<Features />} />
           <Route path="/about" element={<About />} />
           <Route path="/flashcard/:level" element={<FlashcardPage isLoggedIn={isLoggedIn} user={user} onLogout={handleLogout} />} />
+          <Route path="/reading/generate" element={isLoggedIn ? <ReadingGenerate isLoggedIn={isLoggedIn} user={user} /> : <Navigate to="/login" />} />
         </Routes>
       </div>
     </Router>
