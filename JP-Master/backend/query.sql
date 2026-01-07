@@ -1,3 +1,12 @@
+-- ============================================================
+-- JP-Master Database Schema
+-- Complete schema for Japanese learning application with PostgreSQL
+-- ============================================================
+-- This schema matches the actual application code usage
+
+-- ============================================================
+-- Core Tables
+-- ============================================================
 
 -- Bảng người dùng
 CREATE TABLE Users (
@@ -10,6 +19,7 @@ CREATE TABLE Users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Bảng từ vựng (Vocabulary Database)
 CREATE TABLE Vocabulary (
     vocab_id SERIAL PRIMARY KEY,
     word VARCHAR(50) NOT NULL,
@@ -20,8 +30,71 @@ CREATE TABLE Vocabulary (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Thêm 10 từ vựng cho mỗi level (N5, N4, N3, N2, N1, SP)
--- Level N5
+-- ============================================================
+-- Reading Feature Tables
+-- ============================================================
+
+-- Bảng bài đọc được tạo từ AI
+CREATE TABLE Readings (
+    reading_id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES Users(user_id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    translation TEXT,
+    romaji_enabled BOOLEAN DEFAULT FALSE,
+    length VARCHAR(20),
+    genre VARCHAR(100),
+    is_temporary BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP
+);
+
+-- ============================================================
+-- Flashcard Feature Tables
+-- ============================================================
+
+-- Bảng tiến độ flashcard của người dùng
+CREATE TABLE UserFlashcards (
+    user_flashcard_id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES Users(user_id) ON DELETE CASCADE,
+    vocab_id INTEGER NOT NULL REFERENCES Vocabulary(vocab_id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'new' CHECK (status IN ('new', 'learning', 'remembered', 'forgotten')),
+    review_count INTEGER DEFAULT 0,
+    last_reviewed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, vocab_id)
+);
+
+-- ============================================================
+-- Indexes for Performance
+-- ============================================================
+
+-- Users indexes
+CREATE INDEX idx_users_email ON Users(email);
+CREATE INDEX idx_users_username ON Users(username);
+
+-- Vocabulary indexes
+CREATE INDEX idx_vocabulary_level ON Vocabulary(jlpt_level);
+CREATE INDEX idx_vocabulary_topic ON Vocabulary(topic);
+
+-- UserFlashcards indexes
+CREATE INDEX idx_userflashcards_user ON UserFlashcards(user_id);
+CREATE INDEX idx_userflashcards_vocab ON UserFlashcards(vocab_id);
+CREATE INDEX idx_userflashcards_status ON UserFlashcards(status);
+CREATE INDEX idx_userflashcards_updated ON UserFlashcards(updated_at);
+
+-- Readings indexes
+CREATE INDEX idx_readings_user ON Readings(user_id);
+CREATE INDEX idx_readings_temporary ON Readings(is_temporary);
+CREATE INDEX idx_readings_expires ON Readings(expires_at);
+
+-- ============================================================
+-- Sample Data - Vocabulary
+-- ============================================================
+
+-- Level N5 (Beginner)
 INSERT INTO Vocabulary (word, kana, meaning, jlpt_level, topic) VALUES
 ('水', 'みず', 'nước', 'N5', 'Nature'),
 ('火', 'ひ', 'lửa', 'N5', 'Nature'),
@@ -86,7 +159,7 @@ INSERT INTO Vocabulary (word, kana, meaning, jlpt_level, topic) VALUES
 ('排除', 'はいじょ', 'loại bỏ', 'N1', 'General'),
 ('網羅', 'もうら', 'bao quát', 'N1', 'General');
 
--- Level SP (Chuyên ngành)
+-- Level SP (Specialized - IT)
 INSERT INTO Vocabulary (word, kana, meaning, jlpt_level, topic) VALUES
 ('解析', 'かいせき', 'phân tích (kỹ thuật)', 'SP', 'IT'),
 ('設計', 'せっけい', 'thiết kế', 'SP', 'IT'),
@@ -98,81 +171,3 @@ INSERT INTO Vocabulary (word, kana, meaning, jlpt_level, topic) VALUES
 ('検証', 'けんしょう', 'kiểm chứng', 'SP', 'IT'),
 ('導入', 'どうにゅう', 'triển khai', 'SP', 'IT'),
 ('障害', 'しょうがい', 'sự cố', 'SP', 'IT');
-
--- Bảng flashcard lưu trạng thái học từ của người dùng
-CREATE TABLE UserFlashcards (
-    user_id INT,
-    vocab_id INT,
-    status VARCHAR(15) CHECK (status IN ('remembered','not_remembered')) DEFAULT 'not_remembered',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, vocab_id),
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),
-    FOREIGN KEY (vocab_id) REFERENCES Vocabulary(vocab_id)
-);
-
--- Bảng lưu từ vựng người dùng chọn để ôn tập
-CREATE TABLE UserSelectedVocab (
-    user_id INT,
-    vocab_id INT,
-    selected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, vocab_id),
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),
-    FOREIGN KEY (vocab_id) REFERENCES Vocabulary(vocab_id)
-);
-
--- Bảng bài đọc do AI tạo ra
-CREATE TABLE Readings (
-    reading_id SERIAL PRIMARY KEY,
-    user_id INT,
-    title VARCHAR(255),
-    content TEXT NOT NULL,
-    translation TEXT,
-    romaji_enabled BOOLEAN DEFAULT FALSE,
-    length VARCHAR(6) CHECK (length IN ('short','medium','long')) DEFAULT 'medium',
-    genre VARCHAR(20) CHECK (genre IN ('life','work','school','travel','anime_manga','short_story','simple_news')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
-);
-
--- Bảng liên kết giữa bài đọc và từ vựng
-CREATE TABLE ReadingVocab (
-    reading_id INT,
-    vocab_id INT,
-    PRIMARY KEY (reading_id, vocab_id),
-    FOREIGN KEY (reading_id) REFERENCES Readings(reading_id),
-    FOREIGN KEY (vocab_id) REFERENCES Vocabulary(vocab_id)
-);
-
--- Bảng lưu audio bài đọc
-CREATE TABLE ReadingAudio (
-    audio_id SERIAL PRIMARY KEY,
-    reading_id INT,
-    gender VARCHAR(6) CHECK (gender IN ('male','female')),
-    speed VARCHAR(4) CHECK (speed IN ('0.75','1','1.25')) DEFAULT '1',
-    audio_url VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (reading_id) REFERENCES Readings(reading_id)
-);
-
--- Bảng quiz đọc hiểu
-CREATE TABLE Quizzes (
-    quiz_id SERIAL PRIMARY KEY,
-    reading_id INT,
-    question TEXT NOT NULL,
-    correct_answer TEXT NOT NULL,
-    wrong_answers TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (reading_id) REFERENCES Readings(reading_id)
-);
-
--- Bảng lưu kết quả quiz người dùng làm
-CREATE TABLE UserQuizResults (
-    user_id INT,
-    quiz_id INT,
-    user_answer TEXT,
-    is_correct BOOLEAN,
-    answered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, quiz_id),
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),
-    FOREIGN KEY (quiz_id) REFERENCES Quizzes(quiz_id)
-);
