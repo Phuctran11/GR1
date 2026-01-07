@@ -21,6 +21,8 @@ CREATE INDEX IF NOT EXISTS idx_users_email
 ON Users(email);
 
 -- Record this migration
+-- Note: migrations_history table is created by the migration runner (migrate.js)
+-- BEFORE any migration files are executed, so this INSERT will work correctly
 INSERT INTO migrations_history (migration_name, description)
 VALUES ('000_create_users_table', 'Create base Users table with authentication fields')
 ON CONFLICT (migration_name) DO NOTHING;
