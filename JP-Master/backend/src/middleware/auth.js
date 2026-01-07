@@ -6,7 +6,9 @@ import jwt from 'jsonwebtoken'
 export function authRequired(req, res, next) {
     try {
         const authHeader = req.headers.authorization || ''
-        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+        const headerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+        const cookieToken = req.cookies?.token
+        const token = headerToken || cookieToken
         if (!token) {
             return res.status(401).json({ error: 'Thiếu token' })
         }

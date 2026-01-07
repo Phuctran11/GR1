@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 import express from 'express'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import { Pool } from 'pg'
 import { setupAuthRoutes } from './routes/authRoutes.js'
 import { setupFlashcardRoutes } from './routes/flashcardRoutes.js'
@@ -9,7 +10,27 @@ import { setupReadingRoutes } from './routes/readingRoutes.js'
 
 const app = express()
 app.use(express.json())
-app.use(cors())
+
+// parse cookies so server can read httpOnly token cookie
+app.use(cookieParser())
+
+// Require JWT secret in production
+if (!process.env.JWT_SECRET) {
+    console.warn('Warning: JWT_SECRET is not set. Set JWT_SECRET in production environment for security.')
+}
+
+// In production, set a CORS whitelist via env `CORS_ORIGINS` (comma-separated). Defaults to common dev origins.
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',')
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true)
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true)
+        }
+        return callback(new Error('CORS policy: this origin is not allowed'))
+    },
+    credentials: true,
+}))
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,

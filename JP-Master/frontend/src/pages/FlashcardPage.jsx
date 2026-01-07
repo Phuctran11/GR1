@@ -26,6 +26,7 @@ const FlashcardPage = ({ isLoggedIn, user, onLogout }) => {
     const [error, setError] = useState('');
     const [current, setCurrent] = useState(0);
     const [selectedVocab, setSelectedVocab] = useState([]);
+    const [ctaError, setCtaError] = useState('');
 
     useEffect(() => {
         setLoading(true);
@@ -58,6 +59,7 @@ const FlashcardPage = ({ isLoggedIn, user, onLogout }) => {
     const toggleSelectCurrent = () => {
         const vocab = vocabList[current]
         if (!vocab) return
+        setCtaError('')
         setSelectedVocab(prev => {
             const exists = prev.find(v => v.vocab_id === vocab.vocab_id)
             if (exists) return prev.filter(v => v.vocab_id !== vocab.vocab_id)
@@ -71,7 +73,7 @@ const FlashcardPage = ({ isLoggedIn, user, onLogout }) => {
             return
         }
         if (!selectedVocab.length) {
-            setError('Hãy chọn ít nhất 1 từ để tạo bài đọc AI')
+            setCtaError('Hãy chọn ít nhất 1 từ để tạo bài đọc AI')
             return
         }
         navigate('/reading/generate', { state: { selectedVocab, level } })
@@ -88,7 +90,12 @@ const FlashcardPage = ({ isLoggedIn, user, onLogout }) => {
                 </div>
                 <h2 className="text-2xl font-bold mb-6 text-blue-700">Flashcard: {levelNames[level] || level}</h2>
                 <div className="mb-4 w-full max-w-md card-base p-4">
-                    <ProgressBar progressData={{ progress, total }} label="Tiến độ đã nhớ" />
+                    <ProgressBar
+                        progressData={{ progress, total }}
+                        label="Tiến độ đã nhớ"
+                        barClass="bg-gradient-to-r from-sky-400 to-blue-600"
+                        trackClass="bg-slate-200"
+                    />
                 </div>
                 {loading ? (
                     <div className="text-blue-500">Đang tải dữ liệu...</div>
@@ -102,24 +109,36 @@ const FlashcardPage = ({ isLoggedIn, user, onLogout }) => {
                                 current={current}
                                 setCurrent={setCurrent}
                                 progress={progress}
+                                renderHeaderActions={({ currentCard, remembered }) => (
+                                  <RememberButton
+                                    userId={user?.user_id}
+                                    vocabId={currentCard?.vocab_id}
+                                    remembered={remembered}
+                                    onChange={handleRememberChange}
+                                    variant="chip"
+                                  />
+                                )}
                             />
                         </div>
 
                         {vocabList.length > 0 && (
-                            <div className="mt-6 flex flex-col items-center gap-3">
-                                <RememberButton
-                                    userId={user?.user_id}
-                                    vocabId={vocabList[current]?.vocab_id}
-                                    remembered={progress[vocabList[current]?.vocab_id] === 'remembered'}
-                                    onChange={handleRememberChange}
-                                />
-                                <div className="flex items-center gap-4">
-                                    <Button onClick={toggleSelectCurrent} variant={selectedVocab.some(v => v.vocab_id === vocabList[current]?.vocab_id) ? 'secondary' : 'ghost'}>
-                                        {selectedVocab.some(v => v.vocab_id === vocabList[current]?.vocab_id) ? 'Bỏ chọn từ này' : 'Chọn từ này để tạo bài đọc'}
-                                    </Button>
-                                    <div className="text-sm text-gray-600">Đã chọn {selectedVocab.length} từ</div>
-                                    <Button onClick={goToGenerate} variant="primary">Tạo bài đọc AI</Button>
+                            <div className="mt-6 w-full max-w-3xl card-base p-4 flex flex-col gap-3">
+                                <div className="flex flex-wrap items-center gap-3 justify-between">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold">Đã chọn {selectedVocab.length} từ</span>
+                                        <span className="text-sm text-gray-600">Chọn 3-5 từ để AI viết hợp lý</span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Button
+                                            onClick={toggleSelectCurrent}
+                                            variant={selectedVocab.some(v => v.vocab_id === vocabList[current]?.vocab_id) ? 'secondary' : 'ghost'}
+                                        >
+                                            {selectedVocab.some(v => v.vocab_id === vocabList[current]?.vocab_id) ? 'Bỏ chọn từ này' : 'Chọn từ này để tạo bài đọc'}
+                                        </Button>
+                                        <Button onClick={goToGenerate} variant="primary">Tạo bài đọc AI</Button>
+                                    </div>
                                 </div>
+                                {ctaError && <div className="text-sm text-red-600">{ctaError}</div>}
                             </div>
                         )}
                     </>

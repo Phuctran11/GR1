@@ -5,6 +5,9 @@
  * - progressData: {progress, total, progressMap} (tùy chọn)
  * - label: nhãn bên trái (tùy chọn)
  * - className: style ngoài (tùy chọn)
+ * - barClass: lớp màu thanh tiến độ (tùy chọn)
+ * - trackClass: lớp nền thanh (tùy chọn)
+ * - showPercent: bật/tắt hiển thị %
  */
 
 /**
@@ -24,22 +27,40 @@ export function calcProgressPercent({ progress, total, progressMap }) {
     return Math.round((rememberedCount / total) * 100);
 }
 
-export default function ProgressBar({ percent, progressData, label = 'Progress', className = '' }) {
+export default function ProgressBar({
+    percent,
+    progressData,
+    label = 'Progress',
+    className = '',
+    barClass = 'bg-white',
+    trackClass = 'bg-white bg-opacity-30',
+    showPercent = true,
+}) {
     let percentValue = 0;
+    let countText = '';
     if (typeof percent === 'number') {
         percentValue = percent;
     } else if (progressData) {
+        const map = progressData.progressMap || progressData.progress || {};
+        const rememberedCount = Object.values(map).filter(s => s === 'remembered').length;
+        const totalCount = progressData.total || Object.keys(map).length || 0;
         percentValue = calcProgressPercent(progressData);
+        if (totalCount) countText = `${rememberedCount}/${totalCount} từ`;
     }
+    const rightLabelParts = [];
+    if (showPercent) rightLabelParts.push(`${percentValue}%`);
+    if (countText) rightLabelParts.push(countText);
+    const rightLabel = rightLabelParts.join(' • ');
     return (
         <div className={`w-full ${className}`}>
             <div className="flex justify-between text-sm mb-1">
                 <span className="font-semibold">{label}</span>
-                <span>{percentValue}%</span>
+                <span>{rightLabel}</span>
             </div>
-            <div className="w-full bg-white bg-opacity-30 rounded-full h-2 overflow-hidden">
+            <div className={`w-full ${trackClass} rounded-full h-2 overflow-hidden`}>
                 <div
-                    className="bg-white h-2 rounded-full transition-all duration-500"
+                    className={`${barClass} h-2 rounded-full transition-all duration-500`
+                    }
                     style={{ width: `${percentValue}%` }}
                 ></div>
             </div>
