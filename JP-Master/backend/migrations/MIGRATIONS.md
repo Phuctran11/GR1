@@ -7,7 +7,7 @@ Hệ thống migrations giúp bạn quản lý các thay đổi schema database 
 ✅ **Version control**: Theo dõi tất cả thay đổi schema  
 ✅ **Rollback an toàn**: Biết chính xác những gì đã thay đổi  
 ✅ **Team collaboration**: Mọi người đều có cùng schema  
-✅ **Audit trail**: Biết ai, khi nào thay đổi gì
+✅ **Audit trail**: Biết ai, khi nào thay đổi gì.
 
 ## 📋 Danh sách Migrations hiện có
 

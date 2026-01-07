@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS Readings (
     content TEXT NOT NULL,
     translation TEXT,
     romaji_enabled BOOLEAN DEFAULT FALSE,
-    length VARCHAR(6) CHECK (length IN ('short','medium','long')) DEFAULT 'medium',
-    genre VARCHAR(20) CHECK (genre IN ('life','work','school','travel','anime_manga','short_story','simple_news')),
+    length VARCHAR(25) CHECK (length IN ('short','medium','long')) DEFAULT 'medium',
+    genre VARCHAR(25) CHECK (genre IN ('life','work','school','travel','anime_manga','short_story','simple_news')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
