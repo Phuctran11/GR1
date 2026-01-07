@@ -10,23 +10,27 @@ const allowedLengths = ['short', 'medium', 'long']
 const defaultModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
 
 function buildPrompt(vocabs, level, genre, length) {
-    const forcedWords = vocabs.map(v => `${v.word} (${v.kana}) -> ${v.meaning}`).join('\n')
-    const lengthHint = {
-        short: '80-120 chữ',
-        medium: '150-220 chữ',
-        long: '250-350 chữ',
-    }[length] || '150-220 chữ'
+        const forcedWords = vocabs.map(v => `${v.word} (${v.kana}) -> ${v.meaning}`).join('\n')
+        const lengthHint = {
+                short: '80-120 chữ',
+                medium: '150-220 chữ',
+                long: '250-350 chữ',
+        }[length] || '150-220 chữ'
 
-    return `Bạn là giáo viên tiếng Nhật. Viết một bài đọc tiếng Nhật (không dùng markdown) độ dài ${lengthHint}, thể loại ${genre}, trình độ ${level}.
-Bài đọc phải chứa TẤT CẢ các từ sau và dùng đúng hình thức đã cho: ${vocabs.map(v => v.word).join(', ')}.
-Hãy trả về JSON thuần, không thêm giải thích, không thêm markdown:
+        return `Bạn là giáo viên tiếng Nhật. Viết bài đọc TIẾNG NHẬT THUẦN (không markdown, không tiếng Việt/Anh trong title và content) độ dài ~${lengthHint}, thể loại ${genre}, trình độ ${level}.
+Bài đọc phải chứa TẤT CẢ các từ sau và giữ nguyên hình thức đã cho (không đổi kana/kanji): ${vocabs.map(v => v.word).join(', ')}.
+Chỉ trả về JSON thuần, không thêm giải thích:
 {
-  "title": "...",
-  "content": "bài đọc tiếng Nhật, giữ nguyên xuống dòng bằng \\n",
-  "translation_vi": "bản dịch tiếng Việt",
-  "romaji": "có thể bỏ trống hoặc để romaji cho toàn bộ content"
+    "title": "tiếng Nhật",
+    "content": "bài đọc tiếng Nhật, giữ nguyên xuống dòng bằng \\n, không romaji",
+    "translation_vi": "bản dịch tiếng Việt cho toàn bộ content",
+    "romaji": "có thể bỏ trống hoặc để romaji cho toàn bộ content"
 }
-Đảm bảo mỗi từ trong danh sách xuất hiện tối thiểu một lần trong content.`
+Quy tắc:
+- Không thêm trường khác ngoài schema.
+- Title và content PHẢI là tiếng Nhật, không chèn tiếng Việt/Anh.
+- Ưu tiên câu ngắn, tự nhiên và chứa đầy đủ từ bắt buộc.
+- Không thêm markdown hay ký hiệu dư thừa.`
 }
 
 async function callGemini(prompt) {
@@ -77,21 +81,23 @@ function validateForcedWords(content, words) {
 }
 
 function buildQuizPrompt(reading, count) {
-        const capped = Math.max(3, Math.min(count || 3, 6))
-        return `Bạn là giáo viên tiếng Nhật. Tạo ${capped} câu hỏi trắc nghiệm đọc hiểu dựa trên bài đọc sau.
-BÀI ĐỌC:
+    // Allow 1-6 questions as requested by frontend
+    const capped = Math.max(1, Math.min(count || 3, 6))
+    return `Bạn là giáo viên tiếng Nhật. Tạo ${capped} câu hỏi trắc nghiệm đọc hiểu dựa trên bài đọc tiếng Nhật dưới đây.
+BÀI ĐỌC (JA):
 ${reading.content}
 
-Nếu cần, dùng bản dịch Việt để hiểu ngữ cảnh:
+Bản dịch VI (chỉ để tham khảo ngữ cảnh, KHÔNG được sao chép tiếng Việt vào câu hỏi/options):
 ${reading.translation || 'N/A'}
 
 Yêu cầu:
-- Mỗi câu hỏi 4 phương án khác nhau, ngắn gọn (< 80 ký tự), tránh trùng lặp.
-- Câu hỏi có thể viết bằng tiếng Nhật hoặc tiếng Việt, nhưng phải bám sát nội dung.
+- Toàn bộ "question" và "options" PHẢI viết bằng tiếng Nhật (hiragana/katakana/kanji), không dùng tiếng Việt/Anh/romaji.
+- Mỗi câu hỏi 4 phương án khác nhau, ngắn gọn (< 60 ký tự), tránh trùng lặp nội dung.
 - answer phải khớp chính xác một trong các options.
-- explanation bằng tiếng Việt, ngắn gọn.
-- difficulty: easy | medium | hard.
-- Không dùng markdown. Chỉ trả JSON đúng schema.
+- explanation bằng tiếng Việt, ngắn gọn, nêu lý do đáp án đúng.
+- difficulty: easy | medium | hard, phân bố hợp lý.
+- Không dùng markdown hay văn bản thừa. Chỉ trả JSON đúng schema.
+- id lần lượt q1, q2, q3...
 Schema JSON:
 {
     "questions": [
@@ -256,12 +262,43 @@ export function setupReadingRoutes(app, pool) {
             if (!text || !text.trim()) return res.status(400).json({ error: 'Không có nội dung để đọc' })
 
             // Generate MP3 using google-tts-api (free, rate-limited)
-            const base64 = await googleTTS.getAudioBase64(text, {
-                lang: 'ja',
-                slow: false,
-                host: 'https://translate.google.com',
-            })
-            return res.json({ mime: 'audio/mpeg', audioBase64: base64 })
+            // For long texts (>200 chars) use getAllAudioBase64 and concat parts into one MP3
+            const ttsOptions = { lang: 'ja', slow: false, host: 'https://translate.google.com' }
+            try {
+                if (text.length <= 200) {
+                    const base64 = await googleTTS.getAudioBase64(text, ttsOptions)
+                    return res.json({ mime: 'audio/mpeg', audioBase64: base64 })
+                } else {
+                    // getAllAudioBase64 returns an array of base64-encoded mp3 parts
+                    const parts = await googleTTS.getAllAudioBase64(text, ttsOptions)
+                    // parts may be strings (base64) or objects { base64: '...' } depending on version
+                    const bufs = []
+                    for (const p of parts) {
+                        if (typeof p === 'string') {
+                            bufs.push(Buffer.from(p, 'base64'))
+                        } else if (p && typeof p === 'object') {
+                            if (typeof p.base64 === 'string') bufs.push(Buffer.from(p.base64, 'base64'))
+                            else if (typeof p.audioBase64 === 'string') bufs.push(Buffer.from(p.audioBase64, 'base64'))
+                            else if (typeof p.data === 'string') bufs.push(Buffer.from(p.data, 'base64'))
+                            else if (typeof p.content === 'string') bufs.push(Buffer.from(p.content, 'base64'))
+                            else {
+                                console.error('Unknown TTS part format:', p)
+                            }
+                        } else {
+                            console.error('Unsupported TTS part:', typeof p, p)
+                        }
+                    }
+                    if (bufs.length === 0) {
+                        console.error('No valid TTS parts produced', parts)
+                        return res.status(500).json({ error: 'TTS returned no audio parts' })
+                    }
+                    const combined = Buffer.concat(bufs)
+                    return res.json({ mime: 'audio/mpeg', audioBase64: combined.toString('base64') })
+                }
+            } catch (ttsErr) {
+                console.error('TTS generation failed:', ttsErr)
+                return res.status(500).json({ error: 'TTS failed', details: ttsErr.message })
+            }
         } catch (err) {
             console.error('TTS error:', err)
             return res.status(500).json({ error: err.message || 'Lỗi TTS' })

@@ -4,6 +4,7 @@ import Flashcard from '../components/Flashcard';
 import BackButton from '../components/BackButton';
 import RememberButton from '../components/RememberButton';
 import ProgressBar, { calcProgressPercent } from '../components/ProgressBar';
+import Button from '../components/Button';
 import { fetchUserFlashcardProgress } from '../utils/flashcardProgress';
 import { apiFetch } from '../apiClient'
 
@@ -86,39 +87,38 @@ const FlashcardPage = ({ isLoggedIn, user, onLogout }) => {
                     <BackButton className="mr-auto" />
                 </div>
                 <h2 className="text-2xl font-bold mb-6 text-blue-700">Flashcard: {levelNames[level] || level}</h2>
-                <div className="mb-4 w-full max-w-md">
+                <div className="mb-4 w-full max-w-md card-base p-4">
                     <ProgressBar progressData={{ progress, total }} label="Tiến độ đã nhớ" />
                 </div>
-                {loading ? <div className="text-blue-500">Đang tải dữ liệu...</div> : error ? <div className="text-red-500">{error}</div> : (
+                {loading ? (
+                    <div className="text-blue-500">Đang tải dữ liệu...</div>
+                ) : error ? (
+                    <div className="text-red-500">{error}</div>
+                ) : (
                     <>
-                        <Flashcard
-                            vocabList={vocabList}
-                            current={current}
-                            setCurrent={setCurrent}
-                            progress={progress}
-                        />
+                        <div className="w-full flex items-center justify-center min-h-[60vh]">
+                            <Flashcard
+                                vocabList={vocabList}
+                                current={current}
+                                setCurrent={setCurrent}
+                                progress={progress}
+                            />
+                        </div>
+
                         {vocabList.length > 0 && (
-                            <div className="mt-4">
+                            <div className="mt-6 flex flex-col items-center gap-3">
                                 <RememberButton
                                     userId={user?.user_id}
                                     vocabId={vocabList[current]?.vocab_id}
                                     remembered={progress[vocabList[current]?.vocab_id] === 'remembered'}
                                     onChange={handleRememberChange}
                                 />
-                                <div className="mt-4 flex flex-col items-center gap-3">
-                                    <button
-                                        onClick={toggleSelectCurrent}
-                                        className={`px-4 py-2 rounded-lg font-semibold shadow transition-all ${selectedVocab.some(v => v.vocab_id === vocabList[current]?.vocab_id) ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-white border border-purple-300 text-purple-700 hover:bg-purple-50'}`}
-                                    >
+                                <div className="flex items-center gap-4">
+                                    <Button onClick={toggleSelectCurrent} variant={selectedVocab.some(v => v.vocab_id === vocabList[current]?.vocab_id) ? 'secondary' : 'ghost'}>
                                         {selectedVocab.some(v => v.vocab_id === vocabList[current]?.vocab_id) ? 'Bỏ chọn từ này' : 'Chọn từ này để tạo bài đọc'}
-                                    </button>
+                                    </Button>
                                     <div className="text-sm text-gray-600">Đã chọn {selectedVocab.length} từ</div>
-                                    <button
-                                        onClick={goToGenerate}
-                                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-all"
-                                    >
-                                        Tạo bài đọc AI
-                                    </button>
+                                    <Button onClick={goToGenerate} variant="primary">Tạo bài đọc AI</Button>
                                 </div>
                             </div>
                         )}

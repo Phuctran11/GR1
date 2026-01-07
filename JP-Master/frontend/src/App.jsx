@@ -48,7 +48,7 @@ function App() {
 
   return (
     <Router>
-      <div className="w-full overflow-x-hidden">
+      <div className="w-full overflow-x-hidden pt-20">
         <Navbar isLoggedIn={isLoggedIn} user={user} onLogout={handleLogout} />
         <Routes>
           <Route path="/" element={isLoggedIn ? <Home isLoggedIn={isLoggedIn} user={user} /> : <><Hero /><Home isLoggedIn={isLoggedIn} user={user} /></>} />

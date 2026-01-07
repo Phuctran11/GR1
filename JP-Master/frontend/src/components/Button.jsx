@@ -6,13 +6,15 @@ export default function Button({
     disabled = false,
     ...props
 }) {
-    const baseClasses = 'font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed'
+    const baseClasses = 'font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed'
 
     const variantClasses = {
-        primary: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-md hover:shadow-lg disabled:bg-green-400',
-        secondary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-md hover:shadow-lg disabled:bg-blue-400',
-        ghost: 'bg-transparent text-green-600 border-2 border-green-600 hover:bg-green-50 focus:ring-green-500 disabled:border-gray-400 disabled:text-gray-400',
-        outline: 'border-2 border-green-600 text-green-600 hover:bg-green-50 focus:ring-green-500 disabled:border-gray-400 disabled:text-gray-400',
+        primary: 'bg-brand-500 text-white hover:bg-brand-600 focus:ring-brand-100 shadow-md hover:shadow-lg disabled:bg-brand-200',
+        secondary: 'bg-slate-700 text-white hover:bg-slate-800 focus:ring-slate-200 shadow-md hover:shadow-lg disabled:bg-slate-400',
+        correct: 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-200 shadow-md hover:shadow-lg disabled:bg-emerald-300',
+        incorrect: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-200 shadow-md hover:shadow-lg disabled:bg-red-300',
+        ghost: 'bg-transparent text-brand-500 border-2 border-brand-500 hover:bg-brand-50 focus:ring-brand-100 disabled:border-gray-300 disabled:text-gray-400',
+        outline: 'border-2 border-brand-500 text-brand-500 hover:bg-brand-50 focus:ring-brand-100 disabled:border-gray-300 disabled:text-gray-400',
     }
 
     const sizeClasses = {

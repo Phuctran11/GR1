@@ -19,7 +19,7 @@ export default function Navbar({ isLoggedIn = false, user = null, onLogout = () 
     const initials = (user?.username?.[0] || 'U').toUpperCase()
 
     return (
-        <nav className="w-full bg-white shadow-md sticky top-0 z-50">
+        <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur bg-white/95 shadow-md">
             <div className="w-full max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
                 {/* Logo / Branding */}
                 <Link to="/" className="flex items-center gap-2 group">

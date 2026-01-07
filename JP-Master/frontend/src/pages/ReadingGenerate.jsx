@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../apiClient'
 import BackButton from '../components/BackButton'
+import Button from '../components/Button'
+import ProgressBar from '../components/ProgressBar'
 
 const genres = [
   { value: 'life', label: 'Đời sống' },
@@ -41,6 +43,7 @@ export default function ReadingGenerate({ isLoggedIn, user }) {
   const [quiz, setQuiz] = useState(null)
   const [quizLoading, setQuizLoading] = useState(false)
   const [quizError, setQuizError] = useState('')
+  const [quizCount, setQuizCount] = useState(3)
   const [quizAnswers, setQuizAnswers] = useState({})
   const [quizResult, setQuizResult] = useState(null)
 
@@ -49,6 +52,8 @@ export default function ReadingGenerate({ isLoggedIn, user }) {
   }, [isLoggedIn, navigate])
 
   const forcedWords = useMemo(() => selectedVocab.map(v => v.word), [selectedVocab])
+
+  const selectionPercent = Math.min(100, Math.round((selectedVocab.length / 5) * 100))
 
   const handleSubmit = async () => {
     if (!selectedVocab.length) {
@@ -173,26 +178,30 @@ export default function ReadingGenerate({ isLoggedIn, user }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-200 py-8">
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="max-w-[1400px] mx-auto px-4 md:px-6">
         <div className="flex items-center mb-6">
           <BackButton className="mr-4" />
           <h1 className="text-2xl font-bold text-blue-800">Tạo bài đọc AI</h1>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="md:col-span-1 bg-white rounded-xl shadow p-4">
+            <div className="grid md:grid-cols-12 gap-6">
+          <div className="md:col-span-2 card-base">
             <h2 className="text-lg font-semibold mb-3">Từ đã chọn ({selectedVocab.length})</h2>
-            <div className="space-y-2 max-h-80 overflow-y-auto">
+            <div className="space-y-3 max-h-80 overflow-y-auto">
               {selectedVocab.map(v => (
-                <div key={v.vocab_id} className="border border-gray-200 rounded-lg p-2 text-sm">
-                  <div className="font-bold text-blue-700">{v.word} <span className="text-gray-600">({v.kana})</span></div>
+                <div key={v.vocab_id} className="rounded-lg p-3 bg-white/40 border border-white/30">
+                  <div className="font-bold text-brand-700">{v.word} <span className="text-gray-600">({v.kana})</span></div>
                   <div className="text-gray-600">{v.meaning}</div>
                 </div>
               ))}
             </div>
+            <div className="mt-4">
+              <ProgressBar percent={selectionPercent} label={`Chọn từ (${selectedVocab.length})`} />
+              <div className="text-xs text-gray-500 mt-1">Khuyến nghị 3-5 từ để bài đọc cân đối</div>
+            </div>
           </div>
 
-          <div className="md:col-span-2 bg-white rounded-xl shadow p-6 space-y-4">
+          <div className="md:col-span-6 card-base space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-1">Thể loại</label>
@@ -209,120 +218,136 @@ export default function ReadingGenerate({ isLoggedIn, user }) {
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-60"
-              >
-                {loading ? 'Đang tạo...' : 'Tạo bài đọc'}
-              </button>
+              <Button onClick={handleSubmit} disabled={loading} variant="primary">{loading ? 'Đang tạo...' : 'Tạo bài đọc'}</Button>
               <span className="text-sm text-gray-600">Level: {level}</span>
             </div>
 
             {error && <div className="p-3 bg-red-100 border border-red-200 text-red-700 rounded">{error}</div>}
 
             {result && (
-              <div className="space-y-4 mt-4">
-                <div>
-                  <h3 className="text-xl font-bold text-blue-800">{result.reading?.title}</h3>
-                  <div className="mt-3 text-gray-800 whitespace-pre-wrap leading-7" dangerouslySetInnerHTML={{ __html: highlight(result.reading?.content, forcedWords) }} />
-                </div>
-                {result.reading?.translation && (
-                  <div className="p-3 bg-gray-50 border rounded">
-                    <div className="text-sm font-semibold text-gray-700 mb-1">Dịch tiếng Việt</div>
-                    <div className="text-gray-800 whitespace-pre-wrap">{result.reading.translation}</div>
+              <div className="mt-4">
+                {/* reading area occupies 2/4 columns on md+ */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-2xl font-extrabold text-brand-700">{result.reading?.title}</h3>
+                    <div className="mt-3 text-gray-800 whitespace-pre-wrap leading-7" dangerouslySetInnerHTML={{ __html: highlight(result.reading?.content, forcedWords) }} />
                   </div>
-                )}
-                <div className="p-3 bg-white border rounded space-y-2">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleTts}
-                      disabled={ttsLoading}
-                      className="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-60"
-                    >
-                      {ttsLoading ? 'Đang tạo audio...' : 'Nghe bài đọc'}
-                    </button>
-                    {ttsError && <span className="text-sm text-red-600">{ttsError}</span>}
-                  </div>
-                  {audioSrc && (
-                    <audio controls src={audioSrc} className="w-full" />
+
+                  {result.reading?.translation && (
+                    <div className="p-3 bg-white/50 border rounded">
+                      <div className="text-sm font-semibold text-gray-700 mb-1">Dịch tiếng Việt</div>
+                      <div className="text-gray-800 whitespace-pre-wrap">{result.reading.translation}</div>
+                    </div>
                   )}
-                </div>
 
-                <div className="p-4 bg-white border rounded space-y-3">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleQuizGenerate(4)}
-                      disabled={quizLoading}
-                      className="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-60"
-                    >
-                      {quizLoading ? 'Đang tạo quiz...' : 'Tạo quiz đọc hiểu'}
-                    </button>
-                    {quizError && <span className="text-sm text-red-600">{quizError}</span>}
+                  <div className="p-3 bg-white/30 border rounded space-y-2 flex flex-col">
+                    <div className="flex items-center gap-3">
+                      <Button onClick={handleTts} disabled={ttsLoading} variant="ghost">{ttsLoading ? 'Đang tạo audio...' : 'Nghe bài đọc'}</Button>
+                      {ttsError && <span className="text-sm text-red-600">{ttsError}</span>}
+                    </div>
+                    {audioSrc && (
+                      <audio controls src={audioSrc} className="w-full rounded" />
+                    )}
                   </div>
 
-                  {quiz?.questions && (
-                    <div className="space-y-4">
-                      {quiz.questions.map((q, idx) => {
-                        const userAns = quizAnswers[q.id]
-                        const isCorrect = userAns && userAns === q.answer
-                        return (
-                          <div key={q.id} className="border rounded p-3">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <div className="text-sm text-gray-500">Câu {idx + 1} • {q.difficulty || 'medium'}</div>
-                                <div className="font-semibold text-gray-900 mt-1">{q.question}</div>
-                              </div>
-                              {userAns && (
-                                <span className={`text-xs px-2 py-1 rounded ${isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                                  {isCorrect ? 'Đúng' : 'Sai'}
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-2 space-y-2">
+                  {/* On mobile, show full quiz details below content when user expands */}
+                  <div className="mt-4 md:hidden">
+                    {quiz?.questions && (
+                      <div className="space-y-4">
+                        {quiz.questions.map((q) => (
+                          <div key={q.id} className="border rounded p-3 bg-white/60">
+                            <div className="font-semibold">{q.question}</div>
+                            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                               {q.options.map(opt => {
-                                const selected = userAns === opt
-                                const correct = q.answer === opt
+                                const selectedOpt = quizAnswers[q.id] === opt
+                                const isCorrectOpt = q.answer === opt
+                                let mobileVariant = 'ghost'
+                                if (quizResult) {
+                                  if (isCorrectOpt) mobileVariant = 'correct'
+                                  else if (selectedOpt && !isCorrectOpt) mobileVariant = 'incorrect'
+                                } else if (selectedOpt) mobileVariant = 'primary'
                                 return (
-                                  <label key={opt} className={`flex items-center gap-2 p-2 border rounded cursor-pointer ${selected ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>
-                                    <input
-                                      type="radio"
-                                      name={q.id}
-                                      className="accent-indigo-600"
-                                      checked={selected}
-                                      onChange={() => handleAnswer(q.id, opt)}
-                                    />
-                                    <span className="text-gray-800">{opt}</span>
-                                    {quizResult && correct && <span className="text-xs text-emerald-700 ml-2">Đáp án</span>}
-                                  </label>
+                                  <Button key={opt} onClick={() => handleAnswer(q.id, opt)} variant={mobileVariant} className="text-left">{opt}</Button>
                                 )
                               })}
                             </div>
-                            {quizResult && q.explanation && (
-                              <div className="mt-2 text-sm text-gray-700">Giải thích: {q.explanation}</div>
-                            )}
+                            {quizResult && q.explanation && <div className="mt-2 text-sm text-gray-700">Giải thích: {q.explanation}</div>}
                           </div>
-                        )
-                      })}
-
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={handleSubmitQuiz}
-                          className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                          disabled={!quiz?.questions?.length}
-                        >
-                          Chấm điểm
-                        </button>
-                        {quizResult && (
-                          <span className="text-sm font-semibold text-gray-800">Kết quả: {quizResult.score}/{quizResult.total}</span>
-                        )}
+                        ))}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             )}
+
           </div>
+
+          {/* Right-side quiz panel (desktop) */}
+          <aside className="md:col-span-4">
+            <div className="card-base p-4 md:p-6 md:sticky md:top-24 space-y-4 w-full h-auto">
+              <div className="flex items-center justify-between">
+                <div className="font-semibold">Quiz đọc hiểu</div>
+                <div className="text-sm text-gray-500">{quiz?.questions?.length || 0} câu</div>
+              </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm text-gray-600">Số câu</label>
+                          <select value={quizCount} onChange={e => setQuizCount(Number(e.target.value))} className="border rounded px-2 py-1 text-sm">
+                            {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} câu</option>)}
+                          </select>
+                        </div>
+                        <Button onClick={() => handleQuizGenerate(quizCount)} disabled={quizLoading} variant="outline">{quizLoading ? 'Đang tạo...' : 'Tạo'}</Button>
+                      </div>
+
+              {quizError && <div className="text-sm text-red-600">{quizError}</div>}
+
+              {quiz?.questions ? (
+                <div className="max-h-[60vh] overflow-y-auto space-y-3">
+                  {quiz.questions.map((q, idx) => {
+                    const userAns = quizAnswers[q.id]
+                    const showResult = !!quizResult
+                    return (
+                      <div key={q.id} className="p-2 md:p-3 bg-white/60 rounded border">
+                        <div className="text-xs md:text-sm muted">Câu {idx + 1} • <span className={`px-2 py-0.5 rounded text-[10px] md:text-xs ${q.difficulty === 'hard' ? 'bg-red-100 text-red-700' : q.difficulty === 'easy' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}`}>{q.difficulty || 'medium'}</span></div>
+                        <div className="font-medium mt-1 text-sm mb-2">{q.question}</div>
+                        <div className="grid grid-cols-1 gap-2">
+                          {q.options.map(opt => {
+                            const selected = userAns === opt
+                            const correct = q.answer === opt
+                            let variant = 'ghost'
+                            if (showResult) {
+                              if (correct) variant = 'correct'
+                              else if (selected && !correct) variant = 'incorrect'
+                            } else if (selected) variant = 'primary'
+                            return (
+                              <Button key={opt} onClick={() => handleAnswer(q.id, opt)} variant={variant} className="text-left w-full">
+                                <div className="flex items-center justify-between w-full">
+                                  <span className={`truncate ${selected ? 'font-semibold' : ''}`}>{opt}</span>
+                                  {showResult && correct && <span className="text-xs text-white/90 ml-2">Đáp án</span>}
+                                </div>
+                              </Button>
+                            )
+                          })}
+                        </div>
+                        {showResult && q.explanation && <div className="mt-2 text-sm text-gray-700">Giải thích: {q.explanation}</div>}
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500">Chưa có quiz. Tạo để hiển thị các câu hỏi ở đây.</div>
+              )}
+
+              {quiz?.questions && (
+                <div className="flex items-center gap-3">
+                  <Button onClick={handleSubmitQuiz} variant="primary" disabled={!quiz?.questions?.length}>Chấm điểm</Button>
+                  {quizResult && <span className="text-sm font-semibold text-gray-800">{quizResult.score}/{quizResult.total}</span>}
+                </div>
+              )}
+            </div>
+          </aside>
         </div>
       </div>
     </div>
