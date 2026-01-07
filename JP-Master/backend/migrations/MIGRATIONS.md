@@ -7,7 +7,27 @@ Hệ thống migrations giúp bạn quản lý các thay đổi schema database 
 ✅ **Version control**: Theo dõi tất cả thay đổi schema  
 ✅ **Rollback an toàn**: Biết chính xác những gì đã thay đổi  
 ✅ **Team collaboration**: Mọi người đều có cùng schema  
-✅ **Audit trail**: Biết ai, khi nào thay đổi gì  
+✅ **Audit trail**: Biết ai, khi nào thay đổi gì
+
+## 📋 Danh sách Migrations hiện có
+
+| # | Migration File | Description |
+|---|----------------|-------------|
+| 000 | `000_create_users_table.sql` | Tạo bảng Users với các trường authentication cơ bản |
+| 001a | `001_add_full_name_to_users.sql` | Thêm cột full_name và updated_at vào Users |
+| 001b | `001_create_migrations_table.sql` | Tạo bảng migrations_history để theo dõi migrations |
+| 002 | `002_create_vocabulary_table.sql` | Tạo bảng Vocabulary cho từ vựng tiếng Nhật với JLPT levels |
+| 003 | `003_add_email_verification_fields.sql` | Thêm email_verified và email_verified_at vào Users |
+| 004 | `004_create_user_flashcards_table.sql` | Tạo bảng UserFlashcards để theo dõi tiến trình học |
+| 005 | `005_create_user_selected_vocab_table.sql` | Tạo bảng UserSelectedVocab cho từ được chọn ôn tập |
+| 006 | `006_create_readings_table.sql` | Tạo bảng Readings cho bài đọc do AI tạo ra |
+| 007 | `007_create_reading_vocab_table.sql` | Tạo bảng liên kết giữa readings và vocabulary |
+| 008 | `008_create_reading_audio_table.sql` | Tạo bảng ReadingAudio để lưu file audio |
+| 009 | `009_create_quizzes_table.sql` | Tạo bảng Quizzes cho câu hỏi đọc hiểu |
+| 010 | `010_create_user_quiz_results_table.sql` | Tạo bảng UserQuizResults cho kết quả quiz |
+| 011 | `011_seed_vocabulary_data.sql` | Seed dữ liệu từ vựng ban đầu (60 từ: N5-N1 và SP) |
+
+**Tổng cộng**: 13 migration files với schema đầy đủ cho project Japanese Learning  
 
 ---
 

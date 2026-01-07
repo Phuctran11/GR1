@@ -15,5 +15,7 @@ UPDATE Users
 SET full_name = COALESCE(full_name, username)
 WHERE full_name IS NULL;
 
--- Step 4: Verify the changes
-SELECT user_id, username, email, full_name, created_at FROM Users LIMIT 5;
+-- Step 4: Record this migration
+INSERT INTO migrations_history (migration_name, description)
+VALUES ('001_add_full_name_to_users', 'Add full_name and updated_at columns to Users table')
+ON CONFLICT (migration_name) DO NOTHING;
