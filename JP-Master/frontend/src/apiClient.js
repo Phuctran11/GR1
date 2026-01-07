@@ -4,25 +4,21 @@ export function getApiBaseUrl() {
   return API_BASE_URL
 }
 
+// apiFetch now uses credentials to allow httpOnly cookies to be sent/received by the browser.
 export async function apiFetch(path, options = {}) {
-  const token = localStorage.getItem('token')
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
-  }
-  if (token) {
-    headers.Authorization = `Bearer ${token}`
   }
 
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
+    credentials: 'include',
   })
 
-  // Auto logout on 401
+  // Auto redirect to login on 401
   if (res.status === 401) {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
     window.location.href = '/login'
   }
 

@@ -16,32 +16,45 @@ function App() {
   const [user, setUser] = useState(null)
 
   useEffect(() => {
-    // Check token on mount
-    const token = localStorage.getItem('token')
-    const savedUser = localStorage.getItem('user')
-    if (token && savedUser) {
-      setIsLoggedIn(true)
-      setUser(JSON.parse(savedUser))
-    }
+    // Check session on mount by calling verify endpoint (cookie-based auth)
+    ;(async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'}/api/auth/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setIsLoggedIn(true)
+          setUser(data.user)
+        }
+      } catch (err) {
+        // ignore - not logged in
+      }
+    })()
   }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setIsLoggedIn(false)
-    setUser(null)
+    // Ask server to clear httpOnly cookie, then clear client state
+    ;(async () => {
+      try {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'}/api/auth/logout`, {
+          method: 'POST',
+          credentials: 'include',
+        })
+      } catch (err) {
+        // ignore
+      }
+      setIsLoggedIn(false)
+      setUser(null)
+    })()
   }
 
-  const handleLoginSuccess = (userData, token, rememberFlag = false) => {
-    if (token) {
-      localStorage.setItem('token', token)
-    }
+  const handleLoginSuccess = (userData, rememberFlag = false) => {
+    // Server sets httpOnly cookie with token; only store minimal user in memory
     if (userData) {
-      localStorage.setItem('user', JSON.stringify(userData))
       setUser(userData)
-    }
-    if (rememberFlag) {
-      localStorage.setItem('rememberMe', 'true')
     }
     setIsLoggedIn(true)
   }

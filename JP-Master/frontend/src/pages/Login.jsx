@@ -34,8 +34,8 @@ export default function Login({ onLoginSuccess = () => { } }) {
                 return
             }
 
-            // Notify parent to update auth state + localStorage
-            onLoginSuccess(data.user, data.token, rememberMe)
+            // Server sets httpOnly cookie; update parent state with user only
+            onLoginSuccess(data.user, rememberMe)
 
             setSuccess('Login successful! Redirecting...')
             navigate('/')
