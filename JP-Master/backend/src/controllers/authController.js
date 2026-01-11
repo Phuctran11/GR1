@@ -102,10 +102,11 @@ export class AuthController {
 
     logout = async (req, res) => {
         try {
+            const isProd = process.env.NODE_ENV === 'production'
             res.clearCookie('token', {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
+                secure: isProd,
+                sameSite: isProd ? 'none' : 'lax',
             })
             res.json({ ok: true })
         } catch (err) {
